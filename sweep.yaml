@@ -1,0 +1,10 @@
+program: dummy_train.py
+method: grid
+
+metric:
+  name: reward/ep_reward_mean
+  goal: maximize
+project: fish_heading tracking randomruns
+parameters:
+  seed:
+    values: [0,5,10,15,20]

@@ -1,0 +1,49 @@
+seed: 10
+
+env:
+  dt: 0.01
+  max_steps: 500
+  delta_max: 1.0
+  delta_rate_max: 5.0
+  alpha_max: 4619
+  alpha_rate_max: 87000
+  max_heading_angle: 3.14159
+  min_heading_angle: -3.14159
+  max_ux: 0.5
+  min_ux: 0.05
+  omega_rotor_max: 245
+  A_max: 13
+  A_min: 6
+  w_max: 3.0
+  w_min: 2.0
+  beta: 0.02
+  max_position: 1
+
+
+eval:
+  dt: 0.001
+  max_steps: 20000
+
+
+action:
+  dim: 1
+
+training:
+  n_envs: 512
+  n_eval_envs: 1
+  horizon: 256
+  updates: 1000
+  nx: 7
+
+ppo:
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  vf_coef: 0.5
+  ent_coef: 0.01
+  n_epochs: 10
+  n_minibatches: 8
+  target_kl: 0.02
+
+logging:
+  project: fish_path_tracking

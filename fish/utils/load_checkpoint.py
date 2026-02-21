@@ -2,10 +2,10 @@ import os
 import jax
 import orbax.checkpoint as ocp
 from flax import nnx
-from networks import Actor, ValueNet
+from fish.agents.networks import Actor, ValueNet
 import optax
-from obs_normalizer import RunningMeanStd
-from ppo_agent import PPO
+from fish.utils.obs_normalizer import RunningMeanStd
+from fish.agents.ppo_agent import PPO
 
 
 def load_agent(checkpoint_name: str, obs_dim: int, act_dim: int):

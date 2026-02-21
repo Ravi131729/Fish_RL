@@ -2,12 +2,14 @@ import jax
 import jax.numpy as jnp
 from flax import nnx
 
-from fish.env.env_fish import step_env
+from fish.env.env_fish import eval_step_env
 from fish.env.observation import build_obs
 from fish.env.reward import compute_reward
 from fish.env.action_parser import parse_action
+from fish.env.kinematics import head_position
 
-def make_eval_rollout(graphdef, cfg: EnvConfig, T: int):
+
+def make_eval_rollout(graphdef, cfg, T: int):
 
     @jax.jit
     def eval_rollout_fn(state, key, state_vars_in, obs_mean, obs_std):
@@ -60,17 +62,17 @@ def make_eval_rollout(graphdef, cfg: EnvConfig, T: int):
                 "uy_avg": info["uy_avg"],
                 "heading_avg": info["heading_avg"],
                 "omega_avg": info["omega_avg"],
-                "alpha": env_state_next.alpha_prev,
-                "delta": env_state_next.delta_prev,
+                "input_alpha": env_state_next.alpha_prev,
+                "input_delta": env_state_next.delta_prev,
                 "reward": rewards,
-                "u": info["u"],
+                "tail_u": info["u"],
                 "qh": info["qh"],
                 "qdh": info["qdh"],
-                "u_x": info["u_x"],
-                "u_y": info["u_y"],
+                "ux": info["ux"],
+                "uy": info["uy"],
                 "heading_error": info["heading_error"],
-                "heading_des": env_state_next.heading_desired,
-                "cross_track": info["cross_track_error"],
+                "heading_desired": env_state_next.heading_desired,
+                "cross_track_error": info["cross_track_error"],
                 "path_x": env_state_next.paths[:, :, 0],
                 "path_y": env_state_next.paths[:, :, 1],
                 "action_raw": action_vec,

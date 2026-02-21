@@ -24,22 +24,20 @@ def make_input(t, alpha,delta):
     )
 
 @jax.jit
-def step_env(state: EnvState, action, key, cfg: EnvConfig):
+def step_core(state: EnvState, delta_raw, cfg: EnvConfig):
 
-    delta_raw = action["delta"]
-
+    # ================= CONTROL =================
     delta_change = cfg.delta_rate_max * cfg.dt * delta_raw
-    delta = state.delta_prev + delta_change
-    delta = jnp.clip(delta, -cfg.delta_max, cfg.delta_max)
-    # =====================================================
+    delta = jnp.clip(state.delta_prev + delta_change,
+                     -cfg.delta_max, cfg.delta_max)
+
     A = state.A
     w = state.w
     alpha = A * ((2*jnp.pi*w)**2) * jnp.cos(2*jnp.pi*w*state.t)
 
     inp = make_input(state.t, alpha, delta)
 
-    # =====================================================
-
+    # ================= DYNAMICS =================
     x_next = dynamics_step(state.x, inp, state.params, cfg.dt)
     t_next = state.t + cfg.dt
 
@@ -47,8 +45,7 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
     u  = x_next[:, 3]
     qh_dot = x_next[:, -1]
 
-    # =====================================================
-
+    # ================= TAIL =================
     tail_xpos_next, tail_ypos_next = update_tail_position(
         state.tail_xpos,
         state.tail_ypos,
@@ -57,8 +54,7 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
         cfg.dt
     )
 
-    # =====================================================
-
+    # ================= HEAD =================
     geom_state = state.replace(
         x=x_next,
         tail_xpos=tail_xpos_next,
@@ -68,8 +64,7 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
 
     x_head, y_head = head_position(geom_state)
 
-    # =====================================================
-
+    # ================= VELOCITY =================
     vx, vy = world_velocity(
         x_head,
         y_head,
@@ -81,8 +76,7 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
     ux, uy = body_velocity(vx, vy, qh)
     omega = qh_dot
 
-    # =====================================================
-
+    # ================= PATH =================
     ct_err, hd_err, path_heading, idx = compute_path_errors(
         state.paths,
         x_head,
@@ -90,8 +84,7 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
         qh,
     )
 
-    # =====================================================
-
+    # ================= EMA =================
     beta = cfg.beta
 
     x_avg = (1-beta)*state.head_x_avg + beta*x_head
@@ -102,8 +95,7 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
     uy_avg = (1-beta)*state.uy_avg + beta*uy
     omega_avg = (1-beta)*state.omega_avg + beta*omega
 
-    # =====================================================
-
+    # ================= RETURN CANDIDATE =================
     candidate_state = state.replace(
         x=x_next,
         tail_xpos=tail_xpos_next,
@@ -133,12 +125,16 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
         t=t_next,
     )
 
-    # =====================================================
+    return candidate_state
+@jax.jit
+def step_env(state: EnvState, action, key, cfg: EnvConfig):
+
+    delta_raw = action["delta"]
+
+    candidate_state = step_core(state, delta_raw, cfg)
 
     done_next = compute_done(candidate_state, cfg)
     candidate_state = candidate_state.replace(done=done_next)
-
-    # =====================================================
 
     reset_state = reset_env(key, state.x.shape[0], state.x.shape[1], cfg)
 
@@ -150,4 +146,14 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
 
     new_state = jax.tree.map(select, reset_state, candidate_state)
 
+    return new_state
+
+@jax.jit
+def eval_step_env(state: EnvState, action, key, cfg: EnvConfig):
+
+    delta_raw = action["delta"]
+
+    new_state = step_core(state, delta_raw, cfg)
+
+    # No reset. No masking.
     return new_state

@@ -3,7 +3,7 @@ import jax.numpy as jnp
 
 POOL_X = 3.0
 POOL_Y = 2.0
-N_PATH = 30 # <<< SAME FOR ALL
+N_PATH = 30
 
 
 # ============================================================
@@ -69,7 +69,7 @@ def make_line_pool(key):
 def make_sine_pool(key):
     k1, k2, k3, k4 = jax.random.split(key, 4)
 
-    A = jax.random.uniform(k1, (), minval=1, maxval=2)
+    A = jax.random.uniform(k1, (), minval=0.5, maxval=1.2)
     lam = jax.random.uniform(k2, (), minval=2, maxval=6)
 
     x0 = jax.random.uniform(k3, (), minval=0.2, maxval=0.5)

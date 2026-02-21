@@ -330,10 +330,21 @@ def run_eval_and_log(
     wandb.log({"eval/cross_track_error": wandb.Image(fig)})
     plt.close(fig)
 
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["ux_avg"])
+    plt.title("Average forward velocity")
+    wandb.log({"eval/avg_forward_velocity": wandb.Image(fig)})
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["uy_avg"])
+    plt.title("Average lateral velocity")
+    wandb.log({"eval/avg_lateral_velocity": wandb.Image(fig)})
+    plt.close(fig)
     print("  -> eval done")
 
 
-def main(seed=10):
+def main(seed=5):
 
     (
         cfg, eval_cfg, ppo_cfg,
@@ -387,4 +398,4 @@ def main(seed=10):
     print("Training done")
 
 if __name__ == "__main__":
-    main(seed=10)
+    main(seed=5)

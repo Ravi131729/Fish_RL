@@ -31,8 +31,8 @@ def build_obs(state, cfg, key=None):
 
     obs = jnp.concatenate([
         ux[:,None],
-        uy[:,None],
-        qh[:,None],
+        # uy[:,None],
+        # qh[:,None],
         ct_err[:,None],
         hd_err[:,None],
         state.delta_prev[:,None],

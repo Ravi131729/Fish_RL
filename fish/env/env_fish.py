@@ -24,8 +24,8 @@ def make_input(t, alpha,delta):
     )
 
 @jax.jit
-def step_core(state: EnvState, delta_raw, cfg: EnvConfig):
-
+def step_core(state: EnvState, action, cfg: EnvConfig):
+    delta_raw = action["delta"]
     # ================= CONTROL =================
     delta_change = cfg.delta_rate_max * cfg.dt * delta_raw
     delta = jnp.clip(state.delta_prev + delta_change,
@@ -44,7 +44,7 @@ def step_core(state: EnvState, delta_raw, cfg: EnvConfig):
     qh = x_next[:, 2]
     u  = x_next[:, 3]
     qh_dot = x_next[:, -1]
-
+    head_x_prev, head_y_prev = head_position(state)
     # ================= TAIL =================
     tail_xpos_next, tail_ypos_next = update_tail_position(
         state.tail_xpos,
@@ -60,6 +60,8 @@ def step_core(state: EnvState, delta_raw, cfg: EnvConfig):
         tail_xpos=tail_xpos_next,
         tail_ypos=tail_ypos_next,
         delta_prev=delta,
+        head_x_prev=head_x_prev,
+        head_y_prev=head_y_prev,
     )
 
     x_head, y_head = head_position(geom_state)
@@ -68,8 +70,8 @@ def step_core(state: EnvState, delta_raw, cfg: EnvConfig):
     vx, vy = world_velocity(
         x_head,
         y_head,
-        state.head_x_prev,
-        state.head_y_prev,
+        head_x_prev,
+        head_y_prev,
         cfg.dt,
     )
 
@@ -100,9 +102,10 @@ def step_core(state: EnvState, delta_raw, cfg: EnvConfig):
         x=x_next,
         tail_xpos=tail_xpos_next,
         tail_ypos=tail_ypos_next,
+        head_x_prev=head_x_prev,
+        head_y_prev=head_y_prev,
 
-        head_x_prev=x_head,
-        head_y_prev=y_head,
+
 
         head_x_avg=x_avg,
         head_y_avg=y_avg,
@@ -129,9 +132,9 @@ def step_core(state: EnvState, delta_raw, cfg: EnvConfig):
 @jax.jit
 def step_env(state: EnvState, action, key, cfg: EnvConfig):
 
-    delta_raw = action["delta"]
 
-    candidate_state = step_core(state, delta_raw, cfg)
+
+    candidate_state = step_core(state, action, cfg)
 
     done_next = compute_done(candidate_state, cfg)
     candidate_state = candidate_state.replace(done=done_next)
@@ -151,9 +154,8 @@ def step_env(state: EnvState, action, key, cfg: EnvConfig):
 @jax.jit
 def eval_step_env(state: EnvState, action, key, cfg: EnvConfig):
 
-    delta_raw = action["delta"]
 
-    new_state = step_core(state, delta_raw, cfg)
+    new_state = step_core(state, action, cfg)
 
     # No reset. No masking.
     return new_state

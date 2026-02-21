@@ -5,7 +5,8 @@ import numpy as np
 import wandb
 from flax import nnx
 
-from fish.env.fish_env import reset_env, build_obs
+from fish.env.reset import reset_env
+from fish.env.observation import build_obs
 from fish.agents.ppo_agent import (
     PPO,
     compute_gae,

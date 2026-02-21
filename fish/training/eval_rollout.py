@@ -2,8 +2,9 @@ import jax
 import jax.numpy as jnp
 from flax import nnx
 
-from fish.env.fish_env import build_obs, compute_reward, head_position
-from fish.env.eval_env import eval_step_env   # if separate
+from fish.env.env_fish import step_env
+from fish.env.observation import build_obs
+from fish.env.reward import compute_reward
 from fish.env.action_parser import parse_action
 
 def make_eval_rollout(graphdef, cfg: EnvConfig, T: int):
@@ -55,10 +56,10 @@ def make_eval_rollout(graphdef, cfg: EnvConfig, T: int):
             step_data = {
                 "x": xpos,
                 "y": ypos,
-                "ux": info["ux_avg"],
-                "uy": info["uy_avg"],
-                "heading": info["heading_avg"],
-                "omega": info["omega_avg"],
+                "ux_avg": info["ux_avg"],
+                "uy_avg": info["uy_avg"],
+                "heading_avg": info["heading_avg"],
+                "omega_avg": info["omega_avg"],
                 "alpha": env_state_next.alpha_prev,
                 "delta": env_state_next.delta_prev,
                 "reward": rewards,

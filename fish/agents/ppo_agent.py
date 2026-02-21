@@ -7,12 +7,17 @@ from functools import partial
 from typing import Tuple, Optional
 
 from fish.agents.networks import Actor, ValueNet, sample_action, compute_log_prob
-from fish.env.fish_env import (
-    EnvState, EnvConfig,
-    reset_env, step_env,
-    build_obs, compute_reward
-)
-
+# from fish.env.fish_env import (
+#     EnvState, EnvConfig,
+#     reset_env, step_env,
+#     build_obs, compute_reward
+# )
+from fish.env.observation import build_obs
+from fish.env.reward import compute_reward
+from fish.env.action_parser import parse_action
+from fish.env.reset import reset_env, sample_physics_params
+from fish.env.types import EnvState, EnvConfig
+from fish.env.env_fish import step_env
 
 @chex.dataclass
 class RolloutBuffer:
@@ -30,8 +35,8 @@ class RolloutBuffer:
     omega_avg: jnp.ndarray      # (T, N) - added for debugging
     u: jnp.ndarray      # (T, N) - added for debugging
     qdh: jnp.ndarray      # (T, N) - added for debugging
-    u_x: jnp.ndarray      # (T, N) - added for debugging
-    u_y: jnp.ndarray      # (T, N) - added for debugging
+    ux: jnp.ndarray      # (T, N) - added for debugging
+    uy: jnp.ndarray      # (T, N) - added for debugging
     # velocity_error: jnp.ndarray      # (T, N) - added for debugging
     heading_error: jnp.ndarray      # (T, N) - added for debugging
     cross_track_error: jnp.ndarray      # (T, N) - added for debugging

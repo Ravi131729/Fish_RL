@@ -1,5 +1,5 @@
 import yaml
-from fish.env.fish_env import EnvConfig
+from fish.env.types import EnvConfig
 from fish.agents.ppo_agent import PPOConfig
 
 def load_config(path: str):
@@ -9,7 +9,7 @@ def load_config(path: str):
 
       env_cfg = EnvConfig(**cfg_dict["env"])
 
-      
+
       eval_dict = cfg_dict.get("eval", {})
       eval_cfg = env_cfg.replace(**eval_dict)
 

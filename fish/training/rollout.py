@@ -2,7 +2,9 @@ import jax
 import jax.numpy as jnp
 from flax import nnx
 
-from fish.env.fish_env import build_obs, step_env, compute_reward
+from fish.env.env_fish import step_env
+from fish.env.observation import build_obs
+from fish.env.reward import compute_reward
 from fish.env.action_parser import parse_action
 
 from fish.agents.networks import sample_action
@@ -64,15 +66,15 @@ def make_jitted_rollout(graphdef, state_vars, cfg, T: int, N: int):
                 "done": env_state_next.done,
 
                 # logging
-                "ux": info["ux_avg"],
-                "uy": info["uy_avg"],
-                "heading": info["heading_avg"],
+                "ux_avg": info["ux_avg"],
+                "uy_avg": info["uy_avg"],
+                "heading_avg": info["heading_avg"],
                 "qh": info["qh"],
-                "omega": info["omega_avg"],
+                "omega_avg": info["omega_avg"],
                 "u": info["u"],
                 "qdh": info["qdh"],
-                "u_x": info["u_x"],
-                "u_y": info["u_y"],
+                "ux": info["ux"],
+                "uy": info["uy"],
                 "heading_error": info["heading_error"],
                 "cross_track_error": info["cross_track_error"],
             }
@@ -96,15 +98,15 @@ def make_jitted_rollout(graphdef, state_vars, cfg, T: int, N: int):
             values=traj["values"],
             rewards=traj["rewards"],
             dones=traj["done"],
-            avg_forward_velocity=traj["ux"],
-            avg_lateral_velocity=traj["uy"],
-            avg_heading=traj["heading"],
+            avg_forward_velocity=traj["ux_avg"],
+            avg_lateral_velocity=traj["uy_avg"],
+            avg_heading=traj["heading_avg"],
             qh=traj["qh"],
-            omega_avg=traj["omega"],
+            omega_avg=traj["omega_avg"],
             u=traj["u"],
             qdh=traj["qdh"],
-            u_x=traj["u_x"],
-            u_y=traj["u_y"],
+            ux=traj["ux"],
+            uy=traj["uy"],
             heading_error=traj["heading_error"],
             cross_track_error=traj["cross_track_error"],
         )

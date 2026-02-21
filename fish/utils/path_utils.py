@@ -1,15 +1,5 @@
 import jax
 import jax.numpy as jnp
-def make_input(t, alpha,delta):
-
-
-    return jnp.stack(
-        [delta,
-         jnp.zeros_like(delta),
-         jnp.zeros_like(delta),
-         alpha],
-        axis=1,
-    )
 
 POOL_X = 3.0
 POOL_Y = 2.0

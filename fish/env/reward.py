@@ -33,7 +33,7 @@ def compute_reward(state, state_next, action, cfg):
     reward = (
         - 2.0 * ct_err**2
         - 0.5 * hd**2
-        - 0.01 * delta_change**2
+        # - 0.01 * delta_change**2
     )
 
     reward = jnp.clip(reward, -3.0, 3.0)

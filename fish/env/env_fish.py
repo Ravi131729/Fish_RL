@@ -8,7 +8,7 @@ from fish.env.kinematics import (
 import jax
 import jax.numpy as jnp
 from fish.env.types import EnvState, EnvConfig
-from fish.utils.path_utils import compute_path_errors
+from fish.utils.path_utils import compute_path_errors,circle_lookahead
 from fish.env.reset import sample_physics_params, reset_env , compute_done
 from fish.env.kinematics import head_position ,world_velocity, body_velocity
 
@@ -25,11 +25,24 @@ def make_input(t, alpha,delta):
 
 @jax.jit
 def step_core(state: EnvState, action, cfg: EnvConfig):
-    delta_raw = action["delta"]
-    # ================= CONTROL =================
-    delta_change = cfg.delta_rate_max * cfg.dt * delta_raw
-    delta = jnp.clip(state.delta_prev + delta_change,
-                     -cfg.delta_max, cfg.delta_max)
+
+    kp_raw = action["kp"]   # [-1,1]
+    kd_raw = action["kd"]   # [-1,1]
+
+    kp_min, kp_max = 0.0, 5.0
+    kd_min, kd_max = 0.0, 5.0
+
+    kp = kp_min + 0.5*(kp_raw + 1.0) * (kp_max - kp_min)
+    kd = kd_min + 0.5*(kd_raw + 1.0) * (kd_max - kd_min)
+    qh = state.x[:, 2]
+    hd_error = qh - state.heading_desired
+    hd_error = jnp.arctan2(jnp.sin(hd_error), jnp.cos(hd_error))
+    delta  = kp *(hd_error) + kd*(hd_error - state.heading_error_prev)/cfg.dt
+
+    delta_change = delta - state.delta_prev
+    delta_change = jnp.clip(delta_change, -cfg.delta_rate_max*cfg.dt, cfg.delta_rate_max*cfg.dt)
+    delta = state.delta_prev + delta_change
+    delta = jnp.clip(delta, -cfg.delta_max, cfg.delta_max)
 
     A = state.A
     w = state.w
@@ -85,7 +98,16 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
         y_head,
         qh,
     )
+    target, heading_des, new_idx, found = circle_lookahead(
+        state.paths,
+        x_head,
+        y_head,
+        state.path_idx,
+        L=0.25
+    )
 
+    hd_err  = qh - heading_des
+    hd_err = jnp.arctan2(jnp.sin(hd_err), jnp.cos(hd_err))
     # ================= EMA =================
     beta = cfg.beta
 
@@ -122,8 +144,12 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
         delta_prev=delta,
         alpha_prev=alpha,
 
-        path_idx=idx,
-        heading_desired=path_heading,
+        path_idx=new_idx,
+        heading_desired=heading_des,
+
+        kp=kp,
+        kd=kd,
+        heading_error_prev=hd_error,
 
         t=t_next,
     )

@@ -42,6 +42,8 @@ class EnvConfig:
     # termination
     max_position: float
 
+    dim: int
+
 
 # ================================
 # Environment State
@@ -102,6 +104,15 @@ class EnvState:
     t: jnp.ndarray
     params: PhysicsParams
     done: jnp.ndarray
+
+    # ------------------------
+    # PID Gains for servo
+
+    kp: jnp.ndarray
+    # Ki: jnp.ndarray
+    kd: jnp.ndarray
+
+    heading_error_prev: jnp.ndarray
 
 
 # ================================

@@ -261,99 +261,106 @@ def closest_point_idx(paths, robot_x, robot_y):
 
 
 
-def circle_lookahead_intersection(paths, robot_x, robot_y, robot_heading, L=0.3,
-                                  fallback="closest"):
+import jax.numpy as jnp
+
+def circle_lookahead(
+    paths,
+    robot_x,
+    robot_y,
+    last_idx,      # (N_env,) last visited path index
+    L=0.3,
+):
     """
-    Classical pure pursuit:
-      - intersect circle centered at robot with radius L against polyline segments
-      - choose the intersection point that is forward in heading direction
+    Pure pursuit:
+    - circle intersection with path
+    - choose MOST forward point along path
+    - fallback = last visited index (never jump backward)
 
     paths: (N_env, N_path, 2)
     robot_x/y: (N_env,)
-    robot_heading: (N_env,)  (radians)
-    returns:
-      target_pt: (N_env, 2)
-      desired_heading: (N_env,)
-      found: (N_env,) boolean
-    """
-    N_env, N_path, _ = paths.shape
-    C = jnp.stack([robot_x, robot_y], axis=1)  # (N_env, 2)
+    last_idx: (N_env,)  int
+    L: lookahead
 
-    # heading unit vectors
-    h = jnp.stack([jnp.cos(robot_heading), jnp.sin(robot_heading)], axis=1)  # (N_env,2)
+    returns:
+        target_pt (N_env,2)
+        desired_heading (N_env,)
+        new_last_idx (N_env,)
+        found (N_env,)
+    """
+
+    N_env, N_path, _ = paths.shape
+    N_seg = N_path - 1
+
+    C = jnp.stack([robot_x, robot_y], axis=1)
 
     # segments
-    P0 = paths[:, :-1, :]  # (N_env, N_seg, 2)
-    P1 = paths[:, 1:,  :]  # (N_env, N_seg, 2)
-    d  = P1 - P0           # (N_env, N_seg, 2)
+    P0 = paths[:, :-1, :]
+    P1 = paths[:, 1:, :]
+    d  = P1 - P0
 
-    # Precompute a,b,c for each segment and env
-    f = P0 - C[:, None, :]                      # (N_env, N_seg, 2)
-    a = jnp.sum(d * d, axis=2)                  # (N_env, N_seg)
-    b = 2.0 * jnp.sum(f * d, axis=2)            # (N_env, N_seg)
-    c = jnp.sum(f * f, axis=2) - L * L          # (N_env, N_seg)
+    # only allow segments >= last_idx
+    seg_ids = jnp.arange(N_seg)[None, :]
+    valid_seg_mask = seg_ids >= last_idx[:, None]
 
-    disc = b*b - 4.0*a*c                        # (N_env, N_seg)
-    has_real = disc >= 0.0
+    # quadratic solve
+    f = P0 - C[:, None, :]
+    a = jnp.sum(d*d, axis=2)
+    b = 2.0 * jnp.sum(f*d, axis=2)
+    c = jnp.sum(f*f, axis=2) - L*L
 
-    # Avoid nan from sqrt on negative
-    sqrt_disc = jnp.sqrt(jnp.maximum(disc, 0.0))
+    disc = b*b - 4*a*c
+    has_real = disc >= 0
 
-    # Two roots per segment
-    denom = 2.0 * a + 1e-12
+    sqrt_disc = jnp.sqrt(jnp.maximum(disc, 0))
+    denom = 2*a + 1e-12
+
     t1 = (-b - sqrt_disc) / denom
     t2 = (-b + sqrt_disc) / denom
 
-    # Valid if real and within segment
-    valid1 = has_real & (t1 >= 0.0) & (t1 <= 1.0)
-    valid2 = has_real & (t2 >= 0.0) & (t2 <= 1.0)
+    valid1 = has_real & (t1 >= 0) & (t1 <= 1) & valid_seg_mask
+    valid2 = has_real & (t2 >= 0) & (t2 <= 1) & valid_seg_mask
 
-    # Candidate points (N_env, N_seg, 2)
-    p1 = P0 + t1[:, :, None] * d
-    p2 = P0 + t2[:, :, None] * d
+    p1 = P0 + t1[:,:,None]*d
+    p2 = P0 + t2[:,:,None]*d
 
-    # Forward scores
-    # score = dot(p - C, heading_unit)
-    s1 = jnp.sum((p1 - C[:, None, :]) * h[:, None, :], axis=2)  # (N_env, N_seg)
-    s2 = jnp.sum((p2 - C[:, None, :]) * h[:, None, :], axis=2)
+    # forward along path
+    seg_len = jnp.sqrt(a) + 1e-12
+    seg_dir = d / seg_len[:,:,None]
 
-    # Keep only forward candidates
-    valid1 = valid1 & (s1 > 0.0)
-    valid2 = valid2 & (s2 > 0.0)
+    prog1 = jnp.sum((p1 - P0)*seg_dir, axis=2)
+    prog2 = jnp.sum((p2 - P0)*seg_dir, axis=2)
 
-    # Convert invalid candidates to -inf score so argmax ignores them
+    valid1 = valid1 & (prog1 > 0)
+    valid2 = valid2 & (prog2 > 0)
+
     neg_inf = -1e30
-    score1 = jnp.where(valid1, s1, neg_inf)
-    score2 = jnp.where(valid2, s2, neg_inf)
+    score1 = jnp.where(valid1, prog1, neg_inf)
+    score2 = jnp.where(valid2, prog2, neg_inf)
 
-    # Pick best among (root1, root2) per segment
-    pick_root2 = score2 > score1
-    best_score_seg = jnp.where(pick_root2, score2, score1)  # (N_env, N_seg)
-    best_pt_seg = jnp.where(pick_root2[:, :, None], p2, p1) # (N_env, N_seg, 2)
+    pick2 = score2 > score1
+    best_score_seg = jnp.where(pick2, score2, score1)
+    best_pt_seg = jnp.where(pick2[:,:,None], p2, p1)
 
-    # Pick best across segments
-    best_seg_idx = jnp.argmax(best_score_seg, axis=1)       # (N_env,)
+    best_seg_idx = jnp.argmax(best_score_seg, axis=1)
     best_score = best_score_seg[jnp.arange(N_env), best_seg_idx]
+
     found = best_score > (neg_inf/2)
 
-    target_pt = best_pt_seg[jnp.arange(N_env), best_seg_idx]  # (N_env,2)
+    target_pt = best_pt_seg[jnp.arange(N_env), best_seg_idx]
 
-    # Fallback if no intersection found
-    if fallback == "closest":
-        # closest vertex fallback (fast)
-        dx = paths[:, :, 0] - robot_x[:, None]
-        dy = paths[:, :, 1] - robot_y[:, None]
-        idx_closest = jnp.argmin(dx*dx + dy*dy, axis=1)
-        fb_pt = paths[jnp.arange(N_env), idx_closest]
-    elif fallback == "last":
-        fb_pt = paths[:, -1, :]
-    else:
-        fb_pt = paths[:, 0, :]
+    # fallback → last visited index
+    fb_pt = paths[jnp.arange(N_env), last_idx]
 
-    target_pt = jnp.where(found[:, None], target_pt, fb_pt)
+    target_pt = jnp.where(found[:,None], target_pt, fb_pt)
 
-    desired_heading = jnp.arctan2(target_pt[:, 1] - robot_y,
-                                  target_pt[:, 0] - robot_x)
+    # update last visited index
+    new_last_idx = jnp.where(found, best_seg_idx, last_idx)
+
+    desired_heading = jnp.arctan2(
+        target_pt[:,1] - robot_y,
+        target_pt[:,0] - robot_x
+    )
     desired_heading = jnp.arctan2(jnp.sin(desired_heading), jnp.cos(desired_heading))
 
-    return target_pt, desired_heading, found
+    return target_pt, desired_heading, new_last_idx, found
+

@@ -43,7 +43,7 @@ def reset_env(key, N, nx, cfg: EnvConfig):
     # =====================================================
     # sample path
     # =====================================================
-    paths = sample_paths_batch(k1, N)   # (N,256,2)
+    paths = sample_paths_batch(k4, N)   # (N,256,2)
 
     p0 = paths[:,0,:]
     p1 = paths[:,1,:]
@@ -75,6 +75,7 @@ def reset_env(key, N, nx, cfg: EnvConfig):
 
     A = jax.random.uniform(kA, (N,), minval=cfg.A_min, maxval=cfg.A_max)
     w = jax.random.uniform(kW, (N,), minval=cfg.w_min, maxval=cfg.w_max)
+
 
 
     # =====================================================
@@ -115,6 +116,10 @@ def reset_env(key, N, nx, cfg: EnvConfig):
         paths=paths,
         path_idx=jnp.zeros((N,),dtype=jnp.int32),
         heading_desired=heading_desired,
+
+        kp=jnp.zeros((N,)),
+        kd=jnp.zeros((N,)),
+        heading_error_prev=jnp.zeros((N,)),
 
         t=jnp.zeros((N,)),
         params=sample_physics_params(k4,N),

@@ -35,7 +35,7 @@ def init_system(seed):
     num_updates = train_cfg["updates"]
     nx = train_cfg["nx"]
 
-    act_dim = action_cfg["dim"]
+    act_dim = env_cfg["dim"]
 
     wandb.init(
         project=log_cfg["project"],
@@ -224,9 +224,9 @@ def run_eval_and_log(
         obs_mean,
         obs_std
     )
+    action_vec = traj["action_raw"]
 
-
-
+    print("action shape:", action_vec.shape)
     # ============================================================
     #  PLOTS
     # ============================================================
@@ -248,6 +248,7 @@ def run_eval_and_log(
 
     # --- plot robot trajectory ---
     plt.plot(x[:, i], y[:, i], 'bo-', markersize=1, label="robot")
+    plt.plot(traj["look_ahead_point_x"][i], traj["look_ahead_point_y"][i], 'kx', label="look-ahead point")
 
     # start/end
     plt.scatter(path_x[0], path_y[0], c='k', s=80, label="path start")
@@ -343,6 +344,17 @@ def run_eval_and_log(
     plt.close(fig)
     print("  -> eval done")
 
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["kp"])
+    plt.title("Kp values")
+    wandb.log({"eval/Kp": wandb.Image(fig)})
+    plt.close(fig)
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["kd"])
+    plt.title("Kd values")
+    wandb.log({"eval/Kd": wandb.Image(fig)})
+    plt.close(fig)
+
 
 def main(seed=5):
 
@@ -398,4 +410,4 @@ def main(seed=5):
     print("Training done")
 
 if __name__ == "__main__":
-    main(seed=5)
+    main(seed=1)

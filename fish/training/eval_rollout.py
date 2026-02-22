@@ -76,6 +76,10 @@ def make_eval_rollout(graphdef, cfg, T: int):
                 "path_x": env_state_next.paths[:, :, 0],
                 "path_y": env_state_next.paths[:, :, 1],
                 "action_raw": action_vec,
+                "kp": env_state_next.kp,
+                "kd": env_state_next.kd,
+                "look_ahead_point_x": info["look_ahead_point_x"],
+                "look_ahead_point_y": info["look_ahead_point_y"],
             }
 
             return (env_state_next, key_step), step_data

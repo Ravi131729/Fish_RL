@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import jax
 from fish.env.kinematics import head_position,world_velocity, body_velocity
-from fish.utils.path_utils import compute_path_errors
+from fish.utils.path_utils import compute_path_errors,circle_lookahead
 
 
 def add_obs_noise(key, obs, sigma=0.01):
@@ -28,12 +28,23 @@ def build_obs(state, cfg, key=None):
         ypos,
         qh,
     )
+    target, heading_des, new_idx, found = circle_lookahead(
+        state.paths,
+        xpos,
+        ypos,
+        state.path_idx,
+        L=0.25
+    )
+
+    hd_err  = qh - heading_des
+    hd_err = jnp.arctan2(jnp.sin(hd_err), jnp.cos(hd_err))
 
     obs = jnp.concatenate([
         ux[:,None],
         # uy[:,None],
         # qh[:,None],
-        ct_err[:,None],
+        # ct_err[:,None],
+        
         hd_err[:,None],
         state.delta_prev[:,None],
     ], axis=1)

@@ -1,49 +1,95 @@
+# Policy Application Notes (Deployment)
 
-Observation vector shape: **(6,)**
+## Observations used by policy
 
 ```
 obs = [
-    u_x,          # body forward velocity (m/s)
-    u_y,          # body lateral velocity (m/s)
-    qh,           # heading (rad)
-    ct_err,       # cross-track error (m)
-    hd_err,       # heading error wrt path (rad)
-    delta_prev    # previous steering angle (rad)
+    ux,                 # forward velocity
+    hd_err,             # wrapped heading error
+    delta_prev          # previous servo angle
 ]
 ```
 
+Where:
 
-# Action from Policy
-
-Policy output:
+* `hd_err = wrap(qh - heading_desired)`
+* wrap implemented as:
 
 ```
-delta_raw ∈ [-1, 1]
+hd_err = atan2(sin(err), cos(err))
 ```
-
-Single continuous action.
 
 ---
 
-# servo angle
+## Action from policy
 
+Policy outputs:
 
 ```
-delta_change = delta_rate_max * dt * delta_raw
+kp_raw ∈ [-1,1]
+kd_raw ∈ [-1,1]
+```
+
+Convert to actual gains:
+
+```
+kp_min, kp_max = 0.0, 5.0
+kd_min, kd_max = 0.0, 5.0
+
+kp = kp_min + 0.5*(kp_raw + 1)*(kp_max - kp_min)
+kd = kd_min + 0.5*(kd_raw + 1)*(kd_max - kd_min)
+```
+
+---
+
+## Heading PD controller
+
+```
+hd_error = wrap(qh - heading_desired)
+
+delta = kp * hd_error
+      + kd * (hd_error - heading_error_prev)/dt
+```
+
+---
+
+## Servo rate limit
+
+```
+delta_change = delta - delta_prev
+delta_change = clip(delta_change,
+                    -delta_rate_max*dt,
+                     delta_rate_max*dt)
+
 delta = delta_prev + delta_change
+```
+
+---
+
+## Servo limits
+
+```
 delta = clip(delta, -delta_max, delta_max)
 ```
 
-Parameters:
+---
+
+## State to store each step
+
+Must persist:
 
 ```
-dt = 0.01 s
-delta_max = 1.0 rad
-delta_rate_max = 5.0 rad/s
+delta_prev
+heading_error_prev
 ```
 
-So:
+---
 
-* max servo angle = ±1 rad
-* max servo rate = 5 rad/s
+## Important deployment notes
 
+* Use SAME observation normalization as training
+* Use SAME dt as training
+* Apply gain scaling exactly
+* Always wrap heading error
+* Apply rate limit BEFORE clipping
+* Run at fixed control frequency

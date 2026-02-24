@@ -7,8 +7,8 @@ def compute_reward(state, state_next, action, cfg):
     kp_raw = action["kp"]   # [-1,1]
     kd_raw = action["kd"]   # [-1,1]
 
-    kp_min, kp_max = 0.0, 5.0
-    kd_min, kd_max = 0.0, 0.5
+    kp_min, kp_max = 0.0, 10.0
+    kd_min, kd_max = 0.0, 1.0
 
     kp = kp_min + 0.5*(kp_raw + 1.0) * (kp_max - kp_min)
     kd = kd_min + 0.5*(kd_raw + 1.0) * (kd_max - kd_min)

@@ -24,13 +24,13 @@ def build_obs(state, cfg, key=None):
 
     ct_err, hd_err, path_heading, idx = compute_path_errors(
         state.paths,
-        xpos,
-        ypos,
-        qh,
+        state.head_x_avg,
+        state.head_y_avg,
+        state.heading_avg,
     )
 
     obs = jnp.concatenate([
-        ux[:,None],
+        state.ux_avg[:,None],
         # uy[:,None],
         # qh[:,None],
         ct_err[:,None],

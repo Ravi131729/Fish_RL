@@ -16,7 +16,7 @@ env:
   A_min: 6
   w_max: 3.0
   w_min: 2.0
-  beta: 0.02
+  beta: 0.002
   max_position: 1
 
 
@@ -46,4 +46,4 @@ ppo:
   target_kl: 0.02
 
 logging:
-  project: fish_path_tracking_test
+  project: fish_path_tracking_test_avg

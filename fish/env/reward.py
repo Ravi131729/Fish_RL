@@ -20,9 +20,9 @@ def compute_reward(state, state_next, action, cfg):
 
     ct_err, hd_err, path_heading, idx = compute_path_errors(
         state.paths,
-        xpos,
-        ypos,
-        qh,
+        state.head_x_avg,
+        state.head_y_avg,
+        state.heading_avg,
     )
 
     # normalize heading
@@ -31,7 +31,7 @@ def compute_reward(state, state_next, action, cfg):
     delta_change = state_next.delta_prev - state.delta_prev
 
     reward = (
-        - 2.0 * ct_err**2
+        - 1.5 * ct_err**2
         - 0.5 * hd**2
         # - 0.01 * delta_change**2
     )

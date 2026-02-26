@@ -76,6 +76,8 @@ def reset_env(key, N, nx, cfg: EnvConfig):
     A = jax.random.uniform(kA, (N,), minval=cfg.A_min, maxval=cfg.A_max)
     w = jax.random.uniform(kW, (N,), minval=cfg.w_min, maxval=cfg.w_max)
 
+    desired_speed = jax.random.uniform(k4, (N,), minval=cfg.min_ux, maxval=cfg.max_ux)
+
 
     # =====================================================
     # start position = path start
@@ -115,6 +117,7 @@ def reset_env(key, N, nx, cfg: EnvConfig):
         paths=paths,
         path_idx=jnp.zeros((N,),dtype=jnp.int32),
         heading_desired=heading_desired,
+        desired_speed=desired_speed,
 
         t=jnp.zeros((N,)),
         params=sample_physics_params(k4,N),

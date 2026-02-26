@@ -156,6 +156,7 @@ def log_metrics(metrics, buffer, update, num_updates, update_time, start_time):
     # ===== errors =====
     heading_error_mean = float(buffer.heading_error.mean())
     cross_track_error_mean = float(buffer.cross_track_error.mean())
+    speed_error_mean = float(buffer.speed_error.mean())
 
     elapsed = time.time() - start_time
 
@@ -186,6 +187,7 @@ def log_metrics(metrics, buffer, update, num_updates, update_time, start_time):
         # ---------- errors ----------
         "error/heading_error_mean": heading_error_mean,
         "error/cross_track_error_mean": cross_track_error_mean,
+        "error/speed_error_mean": speed_error_mean,
 
         # ---------- time ----------
         "time/update_time": update_time,
@@ -277,6 +279,7 @@ def run_eval_and_log(
     # ---- Forward velocity ----
     fig = plt.figure(figsize=(6,4))
     plt.plot(traj["ux"])
+    plt.plot(traj["desired_speed"], '--')
     plt.title("Forward velocity")
     wandb.log({"eval/forward_velocity": wandb.Image(fig)})
     plt.close(fig)
@@ -343,6 +346,17 @@ def run_eval_and_log(
     plt.close(fig)
     print("  -> eval done")
 
+    fig = plt.figure(figsize=(6,6))
+    plt.plot(traj["A"])
+    plt.title("Amplitude A")
+    wandb.log({"eval/A": wandb.Image(fig)})
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(6,6))
+    plt.plot(traj["w"])
+    plt.title("Frequency w")
+    wandb.log({"eval/w": wandb.Image(fig)})
+    plt.close(fig)
 
 def main(seed=5):
 
@@ -398,4 +412,4 @@ def main(seed=5):
     print("Training done")
 
 if __name__ == "__main__":
-    main(seed=5)
+    main(seed=0)

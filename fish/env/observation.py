@@ -28,11 +28,10 @@ def build_obs(state, cfg, key=None):
         ypos,
         qh,
     )
+    speed_error = ux - state.desired_speed
 
     obs = jnp.concatenate([
-        ux[:,None],
-        # uy[:,None],
-        # qh[:,None],
+        speed_error[:,None],
         ct_err[:,None],
         hd_err[:,None],
         state.delta_prev[:,None],

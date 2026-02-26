@@ -29,9 +29,11 @@ def compute_reward(state, state_next, action, cfg):
     hd = hd_err / jnp.pi
 
     delta_change = state_next.delta_prev - state.delta_prev
+    speed_error = ux - state.desired_speed
 
     reward = (
-        - 2.0 * ct_err**2
+        - 1.0* speed_error**2
+        - 3.0 * ct_err**2
         - 0.5 * hd**2
         # - 0.01 * delta_change**2
     )
@@ -51,6 +53,7 @@ def compute_reward(state, state_next, action, cfg):
     "uy": uy,
     "heading_error": hd_err,
     "cross_track_error": ct_err,
+    "speed_error": speed_error,
 
 
     }

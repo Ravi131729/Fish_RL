@@ -6,9 +6,11 @@ def parse_action(action_vec, env_state, cfg):
 
     # ===== CURRENT: only delta =====
     delta = action_vec[:, 0]
+    throttle = action_vec[:, 1]
 
     return {
         "delta": delta,
+        "throttle": throttle,
     }
 
     # ===== FUTURE EXAMPLES =====

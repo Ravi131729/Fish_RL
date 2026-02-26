@@ -95,6 +95,7 @@ class EnvState:
     paths: jnp.ndarray             # (N, N_path, 2)
     path_idx: jnp.ndarray
     heading_desired: jnp.ndarray
+    desired_speed: jnp.ndarray
 
     # ------------------------
     # Misc

@@ -76,6 +76,10 @@ def make_eval_rollout(graphdef, cfg, T: int):
                 "path_x": env_state_next.paths[:, :, 0],
                 "path_y": env_state_next.paths[:, :, 1],
                 "action_raw": action_vec,
+                "desired_speed": env_state_next.desired_speed,
+                "A": env_state_next.A,
+                "w": env_state_next.w,
+
             }
 
             return (env_state_next, key_step), step_data

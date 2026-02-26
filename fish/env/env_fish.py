@@ -11,6 +11,59 @@ from fish.env.types import EnvState, EnvConfig
 from fish.utils.path_utils import compute_path_errors
 from fish.env.reset import sample_physics_params, reset_env , compute_done
 from fish.env.kinematics import head_position ,world_velocity, body_velocity
+import jax
+import jax.numpy as jnp
+
+FSET = jnp.array([2.0, 2.5, 3.0])
+
+
+@jax.jit
+def throttle_to_A_f(T, f_prev , cfg: EnvConfig):
+    """
+    T: scalar or (N,)
+    f_prev: same shape as T
+    returns: A, f
+    """
+
+    S = T / (4 * jnp.pi**2)  # S = A f^2
+
+    # expand dims for broadcasting
+    S_exp = S[..., None]          # (...,1)
+    f_exp = FSET[None, ...]       # (1,5)
+
+    A_all = S_exp / (f_exp**2)    # (...,5)
+
+    valid = (A_all >= cfg.A_min) & (A_all <= cfg.A_max)
+
+    # distance to previous frequency
+    freq_dist = jnp.abs(f_exp - f_prev[..., None])
+
+    # mask invalid
+    big = 1e6
+    cost = jnp.where(valid, freq_dist, big)
+
+    # pick best valid
+    idx = jnp.argmin(cost, axis=-1)
+
+    A_pick = jnp.take_along_axis(A_all, idx[..., None], axis=-1)[...,0]
+    f_pick = FSET[idx]
+
+    # -------- fallback if NO valid solution ----------
+    any_valid = jnp.any(valid, axis=-1)
+
+    # clamp A and choose closest throttle match
+    A_clamped = jnp.clip(A_all, cfg.A_min, cfg.A_max)
+    S_hat = A_clamped * (f_exp**2)
+    err = jnp.abs(S_hat - S_exp)
+
+    idx_fb = jnp.argmin(err, axis=-1)
+    A_fb = jnp.take_along_axis(A_clamped, idx_fb[...,None], axis=-1)[...,0]
+    f_fb = FSET[idx_fb]
+
+    A_final = jnp.where(any_valid, A_pick, A_fb)
+    f_final = jnp.where(any_valid, f_pick, f_fb)
+
+    return A_final, f_final
 
 def make_input(t, alpha,delta):
 
@@ -26,13 +79,19 @@ def make_input(t, alpha,delta):
 @jax.jit
 def step_core(state: EnvState, action, cfg: EnvConfig):
     delta_raw = action["delta"]
+    throttle_raw = action["throttle"]
+
     # ================= CONTROL =================
     delta_change = cfg.delta_rate_max * cfg.dt * delta_raw
     delta = jnp.clip(state.delta_prev + delta_change,
                      -cfg.delta_max, cfg.delta_max)
+    throttle_min =946
+    throttle_max = cfg.alpha_max
+    throttle = throttle_min + 0.5*(throttle_max - throttle_min)*(throttle_raw + 1.0)
+    A , f = throttle_to_A_f(throttle, state.w, cfg)
 
-    A = state.A
-    w = state.w
+    A = A
+    w = f
     alpha = A * ((2*jnp.pi*w)**2) * jnp.cos(2*jnp.pi*w*state.t)
 
     inp = make_input(state.t, alpha, delta)
@@ -121,6 +180,8 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
 
         delta_prev=delta,
         alpha_prev=alpha,
+        A=A,
+        w=w,
 
         path_idx=idx,
         heading_desired=path_heading,

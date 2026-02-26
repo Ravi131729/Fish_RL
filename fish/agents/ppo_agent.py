@@ -40,6 +40,7 @@ class RolloutBuffer:
     # velocity_error: jnp.ndarray      # (T, N) - added for debugging
     heading_error: jnp.ndarray      # (T, N) - added for debugging
     cross_track_error: jnp.ndarray      # (T, N) - added for debugging
+    speed_error: jnp.ndarray      # (T, N) - added for debugging
 
 
 

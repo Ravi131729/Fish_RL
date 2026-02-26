@@ -37,17 +37,19 @@ def init_system(seed):
 
     act_dim = action_cfg["dim"]
 
+    key = jax.random.PRNGKey(seed)
+    key, key_env, key_agent, key_eval = jax.random.split(key, 4)
     wandb.init(
         project=log_cfg["project"],
         config={
             "env": train_cfg,
             "ppo": ppo_cfg.__dict__,
             "action_dim": act_dim,
+            "seed": seed,
+            "key_eval": int(key_eval[0]),
         },
     )
 
-    key = jax.random.PRNGKey(seed)
-    key, key_env, key_agent, key_eval = jax.random.split(key, 4)
 
     state = reset_env(key_env, N, nx, cfg=cfg)
     state_eval = reset_env(key_env, N_eval, nx, cfg=eval_cfg)

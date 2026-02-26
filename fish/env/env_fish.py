@@ -14,7 +14,7 @@ from fish.env.kinematics import head_position ,world_velocity, body_velocity
 import jax
 import jax.numpy as jnp
 
-FSET = jnp.array([2.0, 2.5, 3.0])
+FSET = jnp.array([2.0,2.2,2.4,2.6,2.8, 3.0])
 
 
 @jax.jit
@@ -85,9 +85,12 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
     delta_change = cfg.delta_rate_max * cfg.dt * delta_raw
     delta = jnp.clip(state.delta_prev + delta_change,
                      -cfg.delta_max, cfg.delta_max)
+    throttle_change = 1000 * cfg.dt * throttle_raw
+
     throttle_min =946
     throttle_max = cfg.alpha_max
-    throttle = throttle_min + 0.5*(throttle_max - throttle_min)*(throttle_raw + 1.0)
+    throttle = jnp.clip(state.throttle_prev + throttle_change,
+                        throttle_min, throttle_max)
     A , f = throttle_to_A_f(throttle, state.w, cfg)
 
     A = A
@@ -180,6 +183,7 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
 
         delta_prev=delta,
         alpha_prev=alpha,
+        throttle_prev=throttle,
         A=A,
         w=w,
 

@@ -77,6 +77,7 @@ def reset_env(key, N, nx, cfg: EnvConfig):
     w = jax.random.uniform(kW, (N,), minval=cfg.w_min, maxval=cfg.w_max)
 
     desired_speed = jax.random.uniform(k4, (N,), minval=cfg.min_ux, maxval=cfg.max_ux)
+    throttle = jax.random.uniform(k4, (N,), minval=946, maxval=cfg.alpha_max)
 
 
     # =====================================================
@@ -110,7 +111,7 @@ def reset_env(key, N, nx, cfg: EnvConfig):
 
         delta_prev=jnp.zeros((N,)),
         alpha_prev=jnp.zeros((N,)),
-
+        throttle_prev=throttle,
         A=A,
         w=w,
 

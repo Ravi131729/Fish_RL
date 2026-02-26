@@ -82,6 +82,7 @@ class EnvState:
     # ------------------------
     delta_prev: jnp.ndarray
     alpha_prev: jnp.ndarray
+    throttle_prev: jnp.ndarray
 
     # ------------------------
     # Episode constants

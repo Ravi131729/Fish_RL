@@ -29,14 +29,22 @@ def compute_reward(state, state_next, action, cfg):
     hd = hd_err / jnp.pi
 
     delta_change = state_next.delta_prev - state.delta_prev
+    throttle_change = state_next.throttle_prev - state.throttle_prev
     speed_error = ux - state.desired_speed
 
     reward = (
         - 1.0* speed_error**2
-        - 3.0 * ct_err**2
+        - 2.0 * ct_err**2
         - 0.5 * hd**2
+        - 0.0001*throttle_change**2
         # - 0.01 * delta_change**2
     )
+    # reward = (
+    # jnp.exp(-3.0 * speed_error**2)
+    # + jnp.exp(-2.0 * ct_err**2)
+    # + jnp.exp(-1.0 * hd**2)
+    # # - 0.01 * delta_change**2
+    # )
 
     reward = jnp.clip(reward, -3.0, 3.0)
 

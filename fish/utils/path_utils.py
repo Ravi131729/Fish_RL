@@ -70,7 +70,7 @@ def make_sine_pool(key):
     k1, k2, k3, k4 = jax.random.split(key, 4)
 
     A = jax.random.uniform(k1, (), minval=0.5, maxval=1.2)
-    lam = jax.random.uniform(k2, (), minval=2, maxval=6)
+    lam = jax.random.uniform(k2, (), minval=1, maxval=4)
 
     x0 = jax.random.uniform(k3, (), minval=0.2, maxval=0.5)
     y_center = jax.random.uniform(k4, (), minval=0.6, maxval=1.4)

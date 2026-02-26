@@ -28,12 +28,15 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
 
     kp_raw = action["kp"]   # [-1,1]
     kd_raw = action["kd"]   # [-1,1]
+    L_raw = action["L"]     # [-1,1]
 
     kp_min, kp_max = 0.0, 5.0
     kd_min, kd_max = 0.0, 5.0
+    L_min, L_max = 0.15, 0.5
 
     kp = kp_min + 0.5*(kp_raw + 1.0) * (kp_max - kp_min)
     kd = kd_min + 0.5*(kd_raw + 1.0) * (kd_max - kd_min)
+    L = L_min + 0.5*(L_raw + 1.0) * (L_max - L_min)
     qh = state.x[:, 2]
     hd_error = qh - state.heading_desired
     hd_error = jnp.arctan2(jnp.sin(hd_error), jnp.cos(hd_error))
@@ -103,7 +106,7 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
         x_head,
         y_head,
         state.path_idx,
-        L=0.25
+        L=L
     )
 
     hd_err  = qh - heading_des
@@ -150,6 +153,7 @@ def step_core(state: EnvState, action, cfg: EnvConfig):
         kp=kp,
         kd=kd,
         heading_error_prev=hd_error,
+        L = L,
 
         t=t_next,
     )

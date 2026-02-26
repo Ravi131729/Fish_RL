@@ -8,10 +8,13 @@ def parse_action(action_vec, env_state, cfg):
     # ===== CURRENT: only delta =====
     kp = action_vec[:, 0]
     kd = action_vec[:, 1]
+    L = action_vec[:, 2]
 
     return {
         "kp": kp,
-        "kd": kd
+        "kd": kd,
+        "L": L,
+       
     }
 
     # ===== FUTURE EXAMPLES =====

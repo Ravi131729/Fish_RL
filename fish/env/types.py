@@ -111,6 +111,7 @@ class EnvState:
     kp: jnp.ndarray
     # Ki: jnp.ndarray
     kd: jnp.ndarray
+    L: jnp.ndarray
 
     heading_error_prev: jnp.ndarray
 

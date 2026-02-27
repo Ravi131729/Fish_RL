@@ -17,6 +17,7 @@ def compute_reward(state, state_next, action, cfg):
         cfg.dt
     )
     ux,uy = body_velocity(vx, vy, qh)
+    ux = jnp.clip(ux, cfg.min_ux, cfg.max_ux)
 
     ct_err, hd_err, path_heading, idx = compute_path_errors(
         state.paths,
@@ -34,9 +35,9 @@ def compute_reward(state, state_next, action, cfg):
 
     reward = (
         - 1.0* speed_error**2
-        - 2.0 * ct_err**2
+        - 0.5 * ct_err**2
         - 0.5 * hd**2
-        - 0.0001*throttle_change**2
+        # - 0.0001*throttle_change**2
         # - 0.01 * delta_change**2
     )
     # reward = (

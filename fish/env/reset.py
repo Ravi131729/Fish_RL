@@ -149,7 +149,8 @@ def compute_done(state: EnvState, cfg: EnvConfig):
     psi = state.x[:, 2]
     # heading_bounds = jnp.abs(state.heading_avg) > jnp.pi / 6
     heading_bounds = jnp.abs(psi) > 6 * jnp.pi
-    out_of_bounds = jnp.linalg.norm(state.x[:, :2], axis=1) >100
+    out_of_bounds = jnp.linalg.norm(state.x[:, :2], axis=1) >5
+    out_of_bounds_vel = jnp.linalg.norm(state.x[:, :3], axis=1) >5
 
     nan_state = jnp.any(jnp.isnan(state.x), axis=1)
 
@@ -162,6 +163,7 @@ def compute_done(state: EnvState, cfg: EnvConfig):
         | nan_state
         | time_limit
         | heading_bounds
+        | out_of_bounds_vel
         # | big_error
     )
 

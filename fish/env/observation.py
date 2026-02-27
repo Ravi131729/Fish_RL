@@ -35,6 +35,8 @@ def build_obs(state, cfg, key=None):
         ct_err[:,None],
         hd_err[:,None],
         state.delta_prev[:,None],
+        state.throttle_prev[:,None],
+
     ], axis=1)
 
     if key is not None:

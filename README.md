@@ -65,15 +65,11 @@ Key defaults in config:
 
 ## Experimental results
 
-Add your result GIFs here later (example paths shown):
+### Experiment 1: S trajectory tracking
+![Experiment 1](experiments/S_trajmod.gif)
 
-```markdown
-### Experiment 1: Path tracking behavior
-![Experiment 1](experiments/exp1.gif)
-
-### Experiment 2: Controller response
-![Experiment 2](experiments/exp2.gif)
-```
+### Experiment 2: R trajectory tracking
+![Experiment 2](experiments/r_trajmod.gif)
 
 ## Notes
 

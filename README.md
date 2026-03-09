@@ -79,3 +79,5 @@ Add your result GIFs here later (example paths shown):
 
 - Policy actions are normalized in `[-1, 1]` and mapped to physical PID gains in `fish/env/action_parser.py`.
 - Observation/reward/controller details are documented in `notes.md`.
+- PID gains policy work is in the `feature/pid-servo-training` branch.
+- This repository is inspired by the 37 implementation from the Deep RL blog.

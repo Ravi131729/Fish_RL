@@ -156,6 +156,7 @@ def log_metrics(metrics, buffer, update, num_updates, update_time, start_time):
     # ===== errors =====
     heading_error_mean = float(buffer.heading_error.mean())
     cross_track_error_mean = float(buffer.cross_track_error.mean())
+    speed_error_mean = float(buffer.speed_error.mean())
 
     elapsed = time.time() - start_time
 
@@ -186,6 +187,8 @@ def log_metrics(metrics, buffer, update, num_updates, update_time, start_time):
         # ---------- errors ----------
         "error/heading_error_mean": heading_error_mean,
         "error/cross_track_error_mean": cross_track_error_mean,
+        "error/speed_error_mean": speed_error_mean,
+
 
         # ---------- time ----------
         "time/update_time": update_time,
@@ -278,6 +281,7 @@ def run_eval_and_log(
     # ---- Forward velocity ----
     fig = plt.figure(figsize=(6,4))
     plt.plot(traj["ux"])
+    plt.plot(traj["desired_ux"], '--')
     plt.title("Forward velocity")
     wandb.log({"eval/forward_velocity": wandb.Image(fig)})
     plt.close(fig)
@@ -354,6 +358,39 @@ def run_eval_and_log(
     plt.title("Kd values")
     wandb.log({"eval/Kd": wandb.Image(fig)})
     plt.close(fig)
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["ki"])
+    plt.title("Ki values")
+    wandb.log({"eval/Ki": wandb.Image(fig)})
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["v_kp"])
+    plt.title("v_Kp values")
+    wandb.log({"eval/v_Kp": wandb.Image(fig)})
+    plt.close(fig)
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["v_kd"])
+    plt.title("v_Kd values")
+    wandb.log({"eval/v_Kd": wandb.Image(fig)})
+    plt.close(fig)
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["v_ki"])
+    plt.title("v_Ki values")
+    wandb.log({"eval/v_Ki": wandb.Image(fig)})
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["throttle"])
+    plt.title("Previous throttle")
+    wandb.log({"eval/throttle_prev": wandb.Image(fig)})
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(6,4))
+    plt.plot(traj["L"])
+    plt.title("Look-ahead distance L")
+    wandb.log({"eval/look_ahead_distance": wandb.Image(fig)})
+    plt.close(fig)
 
 
 def main(seed=5):
@@ -410,4 +447,4 @@ def main(seed=5):
     print("Training done")
 
 if __name__ == "__main__":
-    main(seed=1)
+    main(seed=10)

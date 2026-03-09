@@ -38,7 +38,7 @@ def sample_physics_params(key, N):
 # ==========================================================
 def reset_env(key, N, nx, cfg: EnvConfig):
 
-    k1,k2,k3,k4 = jax.random.split(key,4)
+    k1,k2,k3,k4,k5 = jax.random.split(key,5)
 
     # =====================================================
     # sample path
@@ -76,13 +76,26 @@ def reset_env(key, N, nx, cfg: EnvConfig):
     A = jax.random.uniform(kA, (N,), minval=cfg.A_min, maxval=cfg.A_max)
     w = jax.random.uniform(kW, (N,), minval=cfg.w_min, maxval=cfg.w_max)
 
+    keyp1, keyp2, keyp3, keyp4, keyp5 , keyp6,keyp7 = jax.random.split(k5, 7)
+
+    kp = jax.random.uniform(keyp1, (N,), minval=0.0, maxval=cfg.max_kp)
+    kd = jax.random.uniform(keyp2, (N,), minval=0.0, maxval=cfg.max_kd)
+    ki = jax.random.uniform(keyp3, (N,), minval=0.0, maxval=cfg.max_ki)
+
+    v_kp = jax.random.uniform(keyp4, (N,), minval=0.0, maxval=cfg.max_v_kp)
+    v_kd = jax.random.uniform(keyp5, (N,), minval=0.0, maxval=cfg.max_v_kd)
+    v_ki = jax.random.uniform(keyp6, (N,), minval=0.0, maxval=cfg.max_v_ki)
+
+    L= 0.25*jnp.ones((N,))
+
+    desired_ux = jax.random.uniform(keyp6, (N,), minval=cfg.min_ux, maxval=cfg.max_ux)
+
 
 
     # =====================================================
     # start position = path start
     # =====================================================
     start = paths[:,0,:]
-
     tail_xpos = start[:,0]
     tail_ypos = start[:,1]
 
@@ -116,10 +129,25 @@ def reset_env(key, N, nx, cfg: EnvConfig):
         paths=paths,
         path_idx=jnp.zeros((N,),dtype=jnp.int32),
         heading_desired=heading_desired,
+        desired_ux=desired_ux,
 
-        kp=jnp.zeros((N,)),
-        kd=jnp.zeros((N,)),
+        kp=kp,
+        kd=kd,
+        ki=ki,
+        v_kp=v_kp,
+        v_kd=v_kd,
+        v_ki=v_ki,
+        L=L,
+
+        throttle_prev=jnp.zeros((N,)),
+
         heading_error_prev=jnp.zeros((N,)),
+        velocity_error_prev=jnp.zeros((N,)),
+
+        heading_error_int=jnp.zeros((N,)),
+        speed_error_int=jnp.zeros((N,)),
+
+
 
         t=jnp.zeros((N,)),
         params=sample_physics_params(k4,N),
@@ -150,7 +178,7 @@ def compute_done(state: EnvState, cfg: EnvConfig):
     psi = state.x[:, 2]
     # heading_bounds = jnp.abs(state.heading_avg) > jnp.pi / 6
     heading_bounds = jnp.abs(psi) > 6 * jnp.pi
-    out_of_bounds = jnp.linalg.norm(state.x[:, :2], axis=1) >100
+    out_of_bounds = jnp.linalg.norm(state.x[:, :3], axis=1) >1.5
 
     nan_state = jnp.any(jnp.isnan(state.x), axis=1)
 
@@ -163,7 +191,7 @@ def compute_done(state: EnvState, cfg: EnvConfig):
         | nan_state
         | time_limit
         | heading_bounds
-        # | big_error
+
     )
 
     return done

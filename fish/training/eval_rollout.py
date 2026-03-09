@@ -78,8 +78,16 @@ def make_eval_rollout(graphdef, cfg, T: int):
                 "action_raw": action_vec,
                 "kp": env_state_next.kp,
                 "kd": env_state_next.kd,
+                "ki": env_state_next.ki,
                 "look_ahead_point_x": info["look_ahead_point_x"],
                 "look_ahead_point_y": info["look_ahead_point_y"],
+                "desired_ux": env_state_next.desired_ux,
+                "v_kp": env_state_next.v_kp,
+                "v_kd": env_state_next.v_kd,
+                "v_ki": env_state_next.v_ki,
+                "L": env_state_next.L,
+                "throttle": env_state_next.throttle_prev,
+
             }
 
             return (env_state_next, key_step), step_data

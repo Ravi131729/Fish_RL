@@ -77,6 +77,7 @@ def make_jitted_rollout(graphdef, state_vars, cfg, T: int, N: int):
                 "uy": info["uy"],
                 "heading_error": info["heading_error"],
                 "cross_track_error": info["cross_track_error"],
+                "speed_error": info["speed_error"],
             }
 
             return (env_state_next, key_step), step_data
@@ -109,6 +110,7 @@ def make_jitted_rollout(graphdef, state_vars, cfg, T: int, N: int):
             uy=traj["uy"],
             heading_error=traj["heading_error"],
             cross_track_error=traj["cross_track_error"],
+            speed_error=traj["speed_error"],
         )
 
         # updated nnx state

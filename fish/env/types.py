@@ -44,6 +44,28 @@ class EnvConfig:
 
     dim: int
 
+    max_kp: float
+    max_kd: float
+    max_ki: float
+
+    min_kp: float
+    min_kd: float
+    min_ki: float
+
+    max_L: float
+    min_L: float
+
+    max_v_kp: float
+    min_v_kp: float
+    max_v_kd: float
+    min_v_kd: float
+    max_v_ki: float
+    min_v_ki: float
+
+    heading_max_int_error: jnp.ndarray  # (N_env,).
+    speed_max_int_error: jnp.ndarray  # (N_env,).
+
+
 
 # ================================
 # Environment State
@@ -97,6 +119,8 @@ class EnvState:
     paths: jnp.ndarray             # (N, N_path, 2)
     path_idx: jnp.ndarray
     heading_desired: jnp.ndarray
+    desired_ux: jnp.ndarray   #body frame desired velocity x
+
 
     # ------------------------
     # Misc
@@ -109,11 +133,24 @@ class EnvState:
     # PID Gains for servo
 
     kp: jnp.ndarray
-    # Ki: jnp.ndarray
+    ki: jnp.ndarray
     kd: jnp.ndarray
+
     L: jnp.ndarray
+#  PID Gains for velocity control (throttle)
+    v_kp: jnp.ndarray
+    v_kd: jnp.ndarray
+    v_ki: jnp.ndarray
+
+    throttle_prev: jnp.ndarray
 
     heading_error_prev: jnp.ndarray
+    velocity_error_prev: jnp.ndarray
+
+    heading_error_int: jnp.ndarray  # (N_env,)
+    speed_error_int: jnp.ndarray  # (N_env,)
+
+
 
 
 # ================================

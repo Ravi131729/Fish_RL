@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import jax
 from fish.env.kinematics import head_position,world_velocity, body_velocity
 from fish.utils.path_utils import compute_path_errors,circle_lookahead
-
+from fish.env.action_parser import get_pid_gains
 
 def add_obs_noise(key, obs, sigma=0.01):
     noise = sigma * jax.random.normal(key, obs.shape)
@@ -33,20 +33,22 @@ def build_obs(state, cfg, key=None):
         xpos,
         ypos,
         state.path_idx,
-        L=0.25
+        L=state.L,
     )
 
     hd_err  = qh - heading_des
     hd_err = jnp.arctan2(jnp.sin(hd_err), jnp.cos(hd_err))
+    hd_err = hd_err / jnp.pi
 
+    speed_err = ux - state.desired_ux
+    speed_err = speed_err /cfg.max_ux
+    kp, kd, ki, v_kp, v_kd, v_ki = get_pid_gains(state, cfg)
     obs = jnp.concatenate([
         ux[:,None],
-        # uy[:,None],
-        # qh[:,None],
-        # ct_err[:,None],
-        
+        speed_err[:,None],
         hd_err[:,None],
         state.delta_prev[:,None],
+
     ], axis=1)
 
     if key is not None:

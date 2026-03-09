@@ -1,22 +1,17 @@
 import jax.numpy as jnp
 from fish.env.kinematics import head_position, world_velocity, body_velocity
 from fish.utils.path_utils import compute_path_errors,circle_lookahead
+from fish.env.action_parser import get_pid_gains
 
 
 def compute_reward(state, state_next, action, cfg):
-    kp_raw = action["kp"]   # [-1,1]
-    kd_raw = action["kd"]   # [-1,1]
-
-    kp_min, kp_max = 0.0, 10.0
-    kd_min, kd_max = 0.0, 1.0
-
-    kp = kp_min + 0.5*(kp_raw + 1.0) * (kp_max - kp_min)
-    kd = kd_min + 0.5*(kd_raw + 1.0) * (kd_max - kd_min)
+    kp, kd, ki, v_kp, v_kd, v_ki = get_pid_gains(action, cfg)
 
     xpos, ypos = head_position(state)
     qh = state.x[:,2]
     u  = state.x[:,3]
     qdh = state.x[:, -1]
+
     vx,vy = world_velocity(
         xpos,
         ypos,
@@ -37,11 +32,13 @@ def compute_reward(state, state_next, action, cfg):
         xpos,
         ypos,
         state.path_idx,
-        L=0.25
+        L=state.L,
     )
 
     hd_err  = qh - heading_des
     hd_err = jnp.arctan2(jnp.sin(hd_err), jnp.cos(hd_err))
+    speed_err = ux - state.desired_ux
+    speed_err = speed_err /cfg.max_ux
 
     # normalize heading
     hd = hd_err / jnp.pi
@@ -49,14 +46,21 @@ def compute_reward(state, state_next, action, cfg):
     delta_change = state_next.delta_prev - state.delta_prev
 
     reward = (
+        - 2.0 * speed_err**2
 
-        - 0.5 * hd**2
+        - 1.0* hd**2
         # - 0.01 * delta_change**2
-        - 0.001 * kp**2
+        - 0.001* kp**2
         - 0.01 * kd**2
+        -0.01 * ki**2
+
+        - 0.001 * v_kp**2
+        - 0.01 * v_kd**2
+        - 0.01 * v_ki**2
+
     )
 
-    reward = jnp.clip(reward, -3.0, 3.0)
+    reward = jnp.clip(reward, -5.0, 5.0)
 
 
     info = {
@@ -71,10 +75,18 @@ def compute_reward(state, state_next, action, cfg):
     "uy": uy,
     "heading_error": hd_err,
     "cross_track_error": ct_err,
+    "speed_error": speed_err,
     "look_ahead_point_x": target[:,0],
     "look_ahead_point_y": target[:,1],
-
-
+    "desired_heading": heading_des,
+    "desired_ux": state.desired_ux,
+    "kp": kp,
+    "kd": kd,
+    "ki": ki,
+    "v_kp": v_kp,
+    "v_kd": v_kd,
+    "v_ki": v_ki,
+    "L": state.L
     }
 
     return reward, info

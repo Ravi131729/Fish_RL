@@ -306,7 +306,7 @@ def circle_lookahead(
     f = P0 - C[:, None, :]
     a = jnp.sum(d*d, axis=2)
     b = 2.0 * jnp.sum(f*d, axis=2)
-    c = jnp.sum(f*f, axis=2) - L*L
+    c = jnp.sum(f*f, axis=2) - (L*L)[:, None]
 
     disc = b*b - 4*a*c
     has_real = disc >= 0

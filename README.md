@@ -65,10 +65,19 @@ Key defaults in config:
 
 ## Experimental results
 
-<p align="center">
-  <img src="experiments/S_trajmod.gif" width="400"/>
-  <img src="experiments/r_trajmod.gif" width="400"/>
-</p>
+<table>
+<tr>
+<td align="center">
+<b>Experiment 1: S trajectory tracking</b><br>
+<img src="experiments/S_trajmod.gif" width="400" height="300">
+</td>
+
+<td align="center">
+<b>Experiment 2: R trajectory tracking</b><br>
+<img src="experiments/r_trajmod.gif" width="400" height="300">
+</td>
+</tr>
+</table>
 ## Notes
 
 - Policy actions are normalized in `[-1, 1]` and mapped to physical PID gains in `fish/env/action_parser.py`.

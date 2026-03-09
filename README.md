@@ -1,6 +1,6 @@
 # Fish_RL
 
-Reinforcement learning for fish-robot path tracking, where the policy outputs PID gains (heading + speed) and the environment applies those gains through classical controllers.
+Reinforcement learning for fish-robot path tracking using a custom-built dynamics model and simulator, where the policy outputs PID gains (heading + speed) and the environment applies those gains through classical controllers.
 
 ## What this repo does
 
